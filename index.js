@@ -54,46 +54,6 @@ const db = new sqlite3.Database('./tareas.db', (err) => {
 app.use(express.json());
 
 // =================
-// FUNCIONES DE VALIDACIÓN
-// =================
-
-// Validar nombre de lista (máximo 20 caracteres, sin caracteres especiales)
-const validarNombreLista = (nombre) => {
-  if (!nombre || nombre.trim() === '') {
-    return { valido: false, error: 'El nombre de la lista es requerido' };
-  }
-  if (nombre.length > 20) {
-    return { valido: false, error: 'El nombre de la lista no puede exceder 20 caracteres' };
-  }
-  const caracteresEspeciales = /[*+\-\.´¿!@#$%^&(){}[\]\\|<>?/~`]/;
-  if (caracteresEspeciales.test(nombre)) {
-    return { valido: false, error: 'El nombre no puede contener caracteres especiales como *+-´¿!@#$%^&()' };
-  }
-  return { valido: true };
-};
-
-// Validar tarea (título máximo 50 caracteres, descripción máximo 200 caracteres, sin caracteres especiales)
-const validarTarea = (titulo, descripcion) => {
-  if (!titulo || titulo.trim() === '') {
-    return { valido: false, error: 'El título de la tarea es requerido' };
-  }
-  if (titulo.length > 50) {
-    return { valido: false, error: 'El título no puede exceder 50 caracteres' };
-  }
-  if (descripcion && descripcion.length > 200) {
-    return { valido: false, error: 'La descripción no puede exceder 200 caracteres' };
-  }
-  const caracteresEspeciales = /[*+\-\.´¿!@#$%^&(){}[\]\\|<>?/~`]/;
-  if (caracteresEspeciales.test(titulo)) {
-    return { valido: false, error: 'El título no puede contener caracteres especiales como *+-´¿!@#$%^&()' };
-  }
-  if (descripcion && caracteresEspeciales.test(descripcion)) {
-    return { valido: false, error: 'La descripción no puede contener caracteres especiales como *+-´¿!@#$%^&()' };
-  }
-  return { valido: true };
-};
-
-// =================
 // RUTAS DE LISTAS
 // =================
 
@@ -112,10 +72,8 @@ app.get('/api/lists', (req, res) => {
 app.post('/api/lists', (req, res) => {
   const { name, color = '#3498db' } = req.body;
   
-  // Validar nombre de la lista
-  const validacion = validarNombreLista(name);
-  if (!validacion.valido) {
-    res.status(400).json({ error: validacion.error });
+  if (!name || name.trim() === '') {
+    res.status(400).json({ error: 'El nombre de la lista es requerido' });
     return;
   }
   
@@ -134,10 +92,8 @@ app.post('/api/lists', (req, res) => {
 app.put('/api/lists/:id', (req, res) => {
   const { name, color } = req.body;
   
-  // Validar nombre de la lista
-  const validacion = validarNombreLista(name);
-  if (!validacion.valido) {
-    res.status(400).json({ error: validacion.error });
+  if (!name || name.trim() === '') {
+    res.status(400).json({ error: 'El nombre de la lista es requerido' });
     return;
   }
   
@@ -217,10 +173,8 @@ app.get('/api/tasks', (req, res) => {
 app.post('/api/tasks', (req, res) => {
   const { title, description, completed = false, priority = 'low', list_id = 1 } = req.body;
   
-  // Validar tarea
-  const validacion = validarTarea(title, description);
-  if (!validacion.valido) {
-    res.status(400).json({ error: validacion.error });
+  if (!title || title.trim() === '') {
+    res.status(400).json({ error: 'El título de la tarea es requerido' });
     return;
   }
   
@@ -272,13 +226,6 @@ app.put('/api/tasks/:id', (req, res) => {
   const { title, description, completed, priority, list_id } = req.body;
   const completedValue = completed ? 1 : 0;
   
-  // Validar tarea
-  const validacion = validarTarea(title, description);
-  if (!validacion.valido) {
-    res.status(400).json({ error: validacion.error });
-    return;
-  }
-  
   db.run('UPDATE tasks SET title = ?, description = ?, completed = ?, priority = ?, list_id = ? WHERE id = ?', 
     [title, description, completedValue, priority || 'low', list_id || 1, req.params.id], function(err) {
     if (err) {
@@ -299,9 +246,9 @@ app.put('/api/tasks/:id', (req, res) => {
 // express.static('.') - Sirve archivos estáticos (HTML, CSS, JS)
 app.use(express.static('.'));
 
-// Ruta principal - Sirve el archivo x.html
+// Ruta principal - Sirve el archivo index.html del cliente
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/x.html');
+    res.sendFile(__dirname + '/client/index.html');
 });
 
 // 7. INICIAR EL SERVIDOR
